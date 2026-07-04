@@ -1,4 +1,5 @@
 import sys, os
+from llm_utils import safe_invoke
 sys.path.append(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "retrieval"))
 
@@ -21,5 +22,5 @@ def answer_question(query, top_k=5):
         ("user", prompt),
     ]
 
-    response = llm.invoke(messages)
+    response = safe_invoke(llm, messages)
     return response.content, retrieved

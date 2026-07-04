@@ -1,0 +1,42 @@
+[
+  {
+    "question": "How do I set a custom timeout on a client?",
+    "ground_truth": "You can set a timeout by passing the timeout parameter to httpx.Client(), either as a single value (e.g. timeout=10.0) or using httpx.Timeout() for fine-grained connect/read/write/pool timeouts."
+  },
+  {
+    "question": "How do I make an asynchronous request with httpx?",
+    "ground_truth": "Use httpx.AsyncClient() as an async context manager, then await client.get() or other async methods."
+  },
+  {
+    "question": "Does httpx support gRPC?",
+    "ground_truth": "No, httpx does not support gRPC. It supports HTTP/1.1 and HTTP/2."
+  },
+  {
+    "question": "How do I disable SSL certificate verification?",
+    "ground_truth": "Pass verify=False when creating the client, e.g. httpx.Client(verify=False), though this is discouraged for production use."
+  },
+  {
+    "question": "How do I stream a response body instead of loading it all at once?",
+    "ground_truth": "Use client.stream() as a context manager, then iterate over response.iter_bytes() or response.iter_text()."
+  },
+  {
+    "question": "How do I send a POST request with JSON data?",
+    "ground_truth": "Use client.post(url, json=data) where data is a Python dict; httpx will serialize it to JSON automatically."
+  },
+  {
+    "question": "How do I retry a request automatically on failure?",
+    "ground_truth": "httpx does not have built-in retry logic; you need to use a third-party library like httpx-retries or implement your own retry wrapper."
+  },
+  {
+    "question": "How do I set custom headers on every request from a client?",
+    "ground_truth": "Pass headers as a dict to the httpx.Client() constructor; they will be merged into every request made by that client."
+  },
+  {
+    "question": "How do I use httpx with WebSockets?",
+    "ground_truth": "httpx itself does not support WebSockets natively, but the third-party httpx-ws library adds WebSocket support on top of httpx."
+  },
+  {
+    "question": "How do I limit the maximum number of connections in a pool?",
+    "ground_truth": "Use httpx.Limits(max_connections=..., max_keepalive_connections=...) and pass it to the client via the limits parameter."
+  }
+]

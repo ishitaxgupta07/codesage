@@ -1,6 +1,7 @@
 import os
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
+from llm_utils import safe_invoke
 
 load_dotenv()
 
@@ -17,9 +18,9 @@ Judge the retrieved context and respond in EXACTLY this format (no extra text):
 GRADE: <relevant|partial|irrelevant>
 REASONING: <one sentence explaining why>
 
-- "relevant": the context clearly contains enough information to fully answer the question
-- "partial": the context is somewhat related but missing key details
-- "irrelevant": the context does not meaningfully address the question
+- "relevant": the context contains the necessary information to answer the question, even if no explicit usage example is shown (e.g. a function signature with the right parameter is sufficient)
+- "partial": the context is related but missing a key piece of information needed for a complete answer
+- "irrelevant": the context does not meaningfully address the question at all
 """
 
 def summarize_chunk(chunk):
@@ -34,7 +35,7 @@ def grade_retrieval(query, retrieved_chunks):
     )
     prompt = GRADE_PROMPT.format(query=query, context_summaries=summaries)
 
-    response = llm.invoke([("user", prompt)])
+    response = safe_invoke(llm, [("user", prompt)])
     text = response.content.strip()
 
     grade = "irrelevant"

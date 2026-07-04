@@ -1,4 +1,5 @@
 import sys, os
+from llm_utils import safe_invoke
 sys.path.append(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "retrieval"))
 
@@ -41,7 +42,7 @@ def answer_node(state: RAGState) -> RAGState:
     print("[answer] Generating final answer...")
     prompt = build_rag_prompt(state["original_query"], state["retrieved"])
     messages = [("system", RAG_SYSTEM_PROMPT), ("user", prompt)]
-    response = llm.invoke(messages)
+    response = safe_invoke(llm, messages)
     state["answer"] = response.content
     return state
 
@@ -58,7 +59,9 @@ def route_after_grade(state: RAGState) -> str:
     if state["grade"] == "relevant":
         return "answer"
     if state["retry_count"] >= state["max_retries"]:
-        return "fallback"
+        if state["grade"] == "partial":
+            return "answer"  # best-effort answer using what we have, rather than refusing
+        return "fallback"  # only truly irrelevant context triggers fallback
     return "correct"
 
 def build_graph():

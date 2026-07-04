@@ -1,6 +1,7 @@
 import os
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
+from llm_utils import safe_invoke
 
 load_dotenv()
 
@@ -21,5 +22,5 @@ Respond with ONLY the rewritten query, nothing else.
 
 def rewrite_query(original_query, reasoning):
     prompt = REWRITE_PROMPT.format(query=original_query, reasoning=reasoning)
-    response = llm.invoke([("user", prompt)])
+    response = safe_invoke(llm, [("user", prompt)])
     return response.content.strip().strip('"')
