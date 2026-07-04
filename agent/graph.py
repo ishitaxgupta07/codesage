@@ -6,6 +6,7 @@ from langgraph.graph import StateGraph, END
 from state import RAGState
 from hybrid_search import hybrid_search
 from grading import grade_retrieval
+from query_rewriter import rewrite_query
 from prompt_templates import RAG_SYSTEM_PROMPT, build_rag_prompt
 
 from langchain_groq import ChatGroq
@@ -28,29 +29,55 @@ def grade_node(state: RAGState) -> RAGState:
     print(f"[grade] Result: {grade} — {reasoning}")
     return state
 
+def correct_node(state: RAGState) -> RAGState:
+    print(f"[correct] Retry {state['retry_count'] + 1}/{state['max_retries']} — rewriting query...")
+    new_query = rewrite_query(state["query"], state["grade_reasoning"])
+    print(f"[correct] Rewritten query: {new_query}")
+    state["query"] = new_query
+    state["retry_count"] += 1
+    return state
+
 def answer_node(state: RAGState) -> RAGState:
     print("[answer] Generating final answer...")
-    prompt = build_rag_prompt(state["query"], state["retrieved"])
+    prompt = build_rag_prompt(state["original_query"], state["retrieved"])
     messages = [("system", RAG_SYSTEM_PROMPT), ("user", prompt)]
     response = llm.invoke(messages)
     state["answer"] = response.content
     return state
 
+def fallback_node(state: RAGState) -> RAGState:
+    print("[fallback] Could not find sufficient context after retries.")
+    state["answer"] = (
+        f"I wasn't able to find sufficient information in the httpx codebase/docs "
+        f"to confidently answer: \"{state['original_query']}\". "
+        f"The closest context found was judged as '{state['grade']}': {state['grade_reasoning']}"
+    )
+    return state
+
 def route_after_grade(state: RAGState) -> str:
-    # Placeholder routing for today — tomorrow this will trigger query rewriting
-    if state["grade"] == "irrelevant":
-        return "answer"  # tomorrow: "correct" instead
-    return "answer"
+    if state["grade"] == "relevant":
+        return "answer"
+    if state["retry_count"] >= state["max_retries"]:
+        return "fallback"
+    return "correct"
 
 def build_graph():
     graph = StateGraph(RAGState)
     graph.add_node("retrieve", retrieve_node)
     graph.add_node("grade", grade_node)
+    graph.add_node("correct", correct_node)
     graph.add_node("answer", answer_node)
+    graph.add_node("fallback", fallback_node)
 
     graph.set_entry_point("retrieve")
     graph.add_edge("retrieve", "grade")
-    graph.add_conditional_edges("grade", route_after_grade, {"answer": "answer"})
+    graph.add_conditional_edges(
+        "grade",
+        route_after_grade,
+        {"answer": "answer", "correct": "correct", "fallback": "fallback"},
+    )
+    graph.add_edge("correct", "retrieve")  # loop back after rewriting
     graph.add_edge("answer", END)
+    graph.add_edge("fallback", END)
 
     return graph.compile()
