@@ -11,6 +11,8 @@ llm = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=os.getenv("GROQ_API
 
 FAITHFULNESS_PROMPT = """Given a context and an answer, determine what fraction of claims in the answer are actually supported by the context.
 
+If the answer honestly states that it could not find sufficient information (a refusal), and makes no false claims, treat this as fully faithful (score 1.0) — faithfulness measures whether claims are false, not whether the answer is complete or satisfying.
+
 Context:
 {context}
 
@@ -26,7 +28,7 @@ RELEVANCY_PROMPT = """Given a question and an answer, rate how well the answer a
 
 Question: {question}
 Answer: {answer}
-
+|
 Respond in EXACTLY this format:
 SCORE: <a number between 0.0 and 1.0>
 REASONING: <one sentence>
@@ -40,13 +42,13 @@ def score_faithfulness(answer, contexts):
     context_str = "\n\n".join(contexts)[:4000]
     prompt = FAITHFULNESS_PROMPT.format(context=context_str, answer=answer)
     response = safe_invoke(llm, [("user", prompt)])
-    time.sleep(2)
+    print(f"    [judge raw] {response.content[:150]}")
     return extract_score(response.content)
 
 def score_relevancy(question, answer):
     prompt = RELEVANCY_PROMPT.format(question=question, answer=answer)
     response = safe_invoke(llm, [("user", prompt)])
-    time.sleep(2)
+    print(f"    [judge raw] {response.content[:150]}")
     return extract_score(response.content)
 
 def evaluate_results(results):
