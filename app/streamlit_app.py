@@ -1,5 +1,14 @@
-import sys, os, time
+import os
 import streamlit as st
+
+if "GROQ_API_KEY" in st.secrets:
+    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+if "QDRANT_URL" in st.secrets:
+    os.environ["QDRANT_URL"] = st.secrets["QDRANT_URL"]
+if "QDRANT_API_KEY" in st.secrets:
+    os.environ["QDRANT_API_KEY"] = st.secrets["QDRANT_API_KEY"]
+import sys, time
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "agent"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "retrieval"))
