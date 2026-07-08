@@ -7,8 +7,8 @@ if "QDRANT_URL" in st.secrets:
     os.environ["QDRANT_URL"] = st.secrets["QDRANT_URL"]
 if "QDRANT_API_KEY" in st.secrets:
     os.environ["QDRANT_API_KEY"] = st.secrets["QDRANT_API_KEY"]
-import sys, time
 
+import sys, time, re
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "agent"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "retrieval"))
@@ -53,6 +53,12 @@ st.markdown("""
   <div class="tab-item">eval.metrics</div>
 </div>
 """, unsafe_allow_html=True)
+
+def clean_display_path(raw_path):
+    parts = re.split(r'[\\/]+', raw_path)
+    if "target_repo" in parts:
+        return "/".join(parts[parts.index("target_repo")+1:])
+    return parts[-1] if parts else raw_path
 
 if "app" not in st.session_state:
     st.session_state.app = build_graph()
@@ -129,12 +135,7 @@ if st.session_state.last_result:
         for idx, item in enumerate(r["retrieved"][:5]):
             chunk = item["chunk"]
             raw_path = chunk.get("file", "unknown")
-            normalized = os.path.normpath(raw_path)
-            parts = normalized.split(os.sep)
-            if "target_repo" in parts:
-                name = "/".join(parts[parts.index("target_repo")+1:])
-            else:
-                name = os.path.basename(raw_path)
+            name = clean_display_path(raw_path)
             bar_width = max(100 - idx * 18, 25)
             st.markdown(f'''
             <div class="chunk-row" style="align-items:center;">
