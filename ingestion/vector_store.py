@@ -5,7 +5,15 @@ import uuid
 COLLECTION_NAME = "codesage_httpx"
 VECTOR_SIZE = 384  # bge-small-en-v1.5 output dimension
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 def get_client():
+    qdrant_url = os.getenv("QDRANT_URL")
+    qdrant_key = os.getenv("QDRANT_API_KEY")
+    if qdrant_url:
+        return QdrantClient(url=qdrant_url, api_key=qdrant_key)
     return QdrantClient(host="localhost", port=6333)
 
 def create_collection():

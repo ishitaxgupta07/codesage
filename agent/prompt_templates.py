@@ -1,3 +1,13 @@
+import os
+
+def clean_path(filepath):
+    normalized = os.path.normpath(filepath)
+    parts = normalized.split(os.sep)
+    if "target_repo" in parts:
+        idx = parts.index("target_repo")
+        return "/".join(parts[idx+1:])
+    return os.path.basename(filepath)
+
 RAG_SYSTEM_PROMPT = """You are CodeSage, an assistant that answers questions about the httpx Python library using ONLY the provided context chunks.
 
 Rules:
@@ -12,11 +22,11 @@ def build_rag_prompt(query, retrieved_chunks):
     for i, item in enumerate(retrieved_chunks):
         chunk = item["chunk"]
         if chunk.get("type") == "doc_section":
-            source = chunk.get("file", "unknown")
+            source = clean_path(chunk.get("file", "unknown"))
             text = chunk.get("content", "")
             context_blocks.append(f"[Chunk {i+1}] Source: {source}\n{text}")
         else:
-            source = f"{chunk.get('file','unknown')}, line {chunk.get('start_line','?')}"
+            source = f"{clean_path(chunk.get('file','unknown'))}, line {chunk.get('start_line','?')}"
             text = chunk.get("code", "")
             docstring = chunk.get("docstring", "")
             context_blocks.append(f"[Chunk {i+1}] Source: {source}\nDocstring: {docstring}\nCode:\n{text}")
