@@ -1,12 +1,12 @@
 import os
+import re
 
 def clean_path(filepath):
-    normalized = os.path.normpath(filepath)
-    parts = normalized.split(os.sep)
+    parts = re.split(r'[\\/]+', filepath)
     if "target_repo" in parts:
         idx = parts.index("target_repo")
         return "/".join(parts[idx+1:])
-    return os.path.basename(filepath)
+    return parts[-1] if parts else filepath
 
 RAG_SYSTEM_PROMPT = """You are CodeSage, an assistant that answers questions about the httpx Python library using ONLY the provided context chunks.
 
